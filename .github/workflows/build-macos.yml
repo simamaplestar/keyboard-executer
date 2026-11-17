@@ -1,0 +1,57 @@
+name: Build macOS Apple Silicon
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONUTF8: "1"
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          architecture: arm64
+      - name: Check native Apple Silicon host
+        run: python packaging/macos_support.py
+      - name: Install dependencies
+        run: python -m pip install -e '.[dev,packaging]'
+      - name: Test macOS integration
+        run: |
+          python -m pytest -q \
+            tests/platforms/test_darwin_keymap.py \
+            tests/platforms/test_darwin_permissions.py \
+            tests/platforms/test_factory.py \
+            tests/platforms/test_keymap.py \
+            tests/platforms/test_input_pynput.py \
+            tests/platforms/test_capture_mss.py \
+            tests/app/test_application.py \
+            tests/app/test_macos_script_editor.py \
+            tests/app/test_macos_self_test.py \
+            tests/app/test_pynput_hotkeys.py \
+            tests/core/test_macos_auth_store.py \
+            tests/core/test_macos_cli.py \
+            tests/packaging/test_macos_build.py \
+            tests/test_packaging.py \
+            tests/test_chat_ocr_packaging.py
+      - name: Build and verify app with offline OCR
+        env:
+          PYTHON: python
+        run: bash packaging/build.sh
+      - name: Upload app archive and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeyboardExecutor-macos-arm64
+          path: |
+            packaging/dist/macos-arm64/KeyboardExecutor-macos-arm64.zip
+            packaging/dist/macos-arm64/KeyboardExecutor-macos-arm64.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

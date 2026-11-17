@@ -1,0 +1,43 @@
+[project]
+name = "keyboard-executor"
+version = "1.0.3"
+description = "跨平台鍵盤滑鼠自動化工具（模擬/錄製/回放 + OCR 畫面判斷）"
+requires-python = ">=3.11"
+dependencies = [
+    "pynput>=1.7.6",
+    "pywinctl>=0.3",
+    "PySide6>=6.8",
+    "mss>=10",
+    "psutil>=5.9",  # 視窗程序名稱快取的快速路徑，不依賴 OCR 套件間接安裝
+    # RapidOCR 與畫面比對共用標準 OpenCV，避免 contrib/headless 重複安裝。
+    "opencv-python>=4.8",
+    "numpy>=1.24,<2.4",
+    # 所有 OCR：經本機離線測試的 PP-OCRv6 tiny / ONNX Runtime 組合
+    "rapidocr==3.9.2",
+    "onnxruntime==1.30.0",
+    "opencc-python-reimplemented==0.1.7",  # 僅圖片順序提示比對做繁簡正規化
+    "pydirectinput>=1.0.4; sys_platform == 'win32'",
+    "pyobjc-framework-ApplicationServices>=10.0; sys_platform == 'darwin'",
+    "pyobjc-framework-Quartz>=10.0; sys_platform == 'darwin'",
+    "keyring>=25.6; sys_platform == 'darwin'",  # Claude setup-token 使用原生 Keychain
+]
+
+[project.scripts]
+keyboard-executor = "keyboard_executor.cli:main"
+
+[project.gui-scripts]
+keyboard-executor-gui = "keyboard_executor.gui:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+packaging = ["pyinstaller>=6.16"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
